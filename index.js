@@ -193,6 +193,59 @@ const choice = (parsers) =>
     );
   });
 
+const many = (parser) =>
+  new Parser((parserState) => {
+    if (parserState.isError) {
+      return parserState;
+    }
+
+    let nextState = parserState;
+    const results = [];
+    let done = false;
+
+    while (!done) {
+      testState = parser.parserStateTransformerFn(nextState);
+
+      if (!testState.isError) {
+        results.push(testState.result);
+        nextState = testState;
+      } else {
+        done = true;
+      }
+    }
+
+    return updateParserResult(nextState, results);
+  });
+
+const manyOne = (parser) =>
+  new Parser((parserState) => {
+    if (parserState.isError) {
+      return parserState;
+    }
+
+    let nextState = parserState;
+
+    const results = [];
+    let done = false;
+
+    while (!done) {
+      testState = parser.parserStateTransformerFn(nextState);
+
+      if (!testState.isError) {
+        results.push(testState.result);
+        nextState = testState;
+      } else {
+        done = true;
+      }
+    }
+
+    if (results.length === 0) {
+      return updateParserError(nextState, `manyOne: Unable to match any input`);
+    }
+
+    return updateParserResult(nextState, results);
+  });
+
 // const parser = sequenceOf([
 //   str("hello world!")
 //     .map((_) => "Halla bhol")
@@ -204,9 +257,9 @@ const choice = (parsers) =>
 //   digits,
 // ]);
 
-const parser = choice([letters, digits, str("hello world!")]);
+const parser = many(choice([letters, digits]));
 
-console.log(parser.run("hello world!foo bar!"));
-console.log(parser.run(""));
-console.log(parser.run("hello world!foo bar!"));
-console.log(parser.run("aws1234"));
+// console.log(parser.run("hello world!foo bar!"));
+// console.log(parser.run(""));
+// console.log(parser.run("hello world!foo bar!"));
+console.log(parser.run("aws1234aws7qwe"));
